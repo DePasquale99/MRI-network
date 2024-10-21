@@ -20,17 +20,31 @@ def contains(extremes_outer, extremes_inner):
     return max_check and min_check
 
 
+# Function to rescale node positions
+def rescale_coordinates(node_positions, skeleton_coords):
+    graph_min = node_positions.min(axis=0)
+    graph_max = node_positions.max(axis=0)
+    skeleton_min = skeleton_coords.min(axis=0)
+    skeleton_max = skeleton_coords.max(axis=0)
+
+    normalized_node_positions = (
+        (node_positions - graph_min) / (graph_max - graph_min)
+    ) * (skeleton_max - skeleton_min) + skeleton_min
+
+    return normalized_node_positions
+
+
 main_directory = "PR-graphomics/sequences/"
 
 # List all subfolders inside the main directory
 folders = [f for f in os.listdir(main_directory) if os.path.isdir(os.path.join(main_directory, f))]
 
 #variables in which the number 
-skel_count, net_count = 0, 0
+skel_count, net_count, norm_net_count = 0, 0, 0
 
 
-for folder in folders:
-    print(f"Accessing folder: {folder}")
+for i, folder in enumerate(folders):
+    print(f"Accessing folder: {folder}, percentage = {i*100/len(folders)} ")
     
     # Construct the path to the current folder
     folder_path = os.path.join(main_directory, folder)
@@ -58,20 +72,33 @@ for folder in folders:
 
     graph = nx.read_gpickle(graph_path)
 
+    skeleton_coords = np.vstack((sx, sy, sz)).T
+
+    # Extract graph node positions
+    node_positions = np.array(graph.nodes, dtype=float)
+
+    # Rescale graph node positions to fit the skeleton's coordinates
+    normalized_node_positions = rescale_coordinates(node_positions, skeleton_coords)
     nodes_coord = list(graph.nodes())
     #print(np.shape(nodes_coord))
     nodes_extremes = (np.max(nodes_coord, 0), np.min(nodes_coord, 0))
-    print(nodes_extremes)
-    print(mesh_extremes)
-    print(skel_extremes)
+
+    normalized_nodes_extremes = (np.max(normalized_node_positions, 0), np.min(normalized_node_positions, 0))
+
+    #print(nodes_extremes)
+    #print(mesh_extremes)
+    #print(skel_extremes)
 
     if contains(mesh_extremes, skel_extremes):
-        print('The skeleton is inside the mesh!')
+        #print('The skeleton is inside the mesh!')
         skel_count +=1
 
     if contains(mesh_extremes, nodes_extremes):
-        print('The graph is inside the mesh!')
+        #print('The graph is inside the mesh!')
         net_count += 1
+    
+    if contains(mesh_extremes, normalized_nodes_extremes):
+        norm_net_count += 1
 
 
     #break
@@ -79,4 +106,5 @@ for folder in folders:
 print('The magic results are:')
 print('percentage of fit for the skelly: ', str(skel_count/len(folders)))
 print('percentage of fit for the grapphy: ', str(net_count/len(folders)))
+print('percentage of fit for the normy grapphy: ', str(norm_net_count/len(folders)))
 
