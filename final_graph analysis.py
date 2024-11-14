@@ -21,7 +21,7 @@ import matplotlib.colors as mcolors
 from scipy.spatial import cKDTree
 
 
-
+###SEEMINGLY USELESS: seems we renounced to analyze all of the networks to recreate a parcellation
 
 ##FUNCTIONS NECESSARY (I WOULD LIKE TO TAKE MY LIFE FOR DOING THAT)
 
